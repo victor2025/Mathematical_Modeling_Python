@@ -1,0 +1,1 @@
+"Shenzhen_USD","Shenzhen_EUR","Shanghai_USD","Shanghai_EUR","Beijing_USD","Beijing_EUR","Guangdong_USD","Guangdong_EUR","Tianjin_USD","Tianjin_EUR","Hubei_USD","Hubei_EUR","Chongqing_USD","Chongqing_EUR","Fujian_USD"
