@@ -30,7 +30,7 @@ def preProcessBuss(file_path, name_list):
     return data
 
 
-def getBusinessData(file_name="data_cn"):
+def getBussinessData(file_name="data_cn"):
     base_dir = "..//res//"
     file_path, name_list = dataInitBuss(base_dir, file_name)
     data = preProcessBuss(file_path, name_list)
@@ -46,6 +46,10 @@ def getGovData(file_name="data_gov"):
     data = pd.read_excel(base_dir + file_name + ".xls")
     data.drop(data.columns[0], axis=1, inplace=True)
     data.dropna(axis=0, how="all", inplace=True)
+    # 截取2013年之后的数据
+    for index,item in data.iteritems():
+        if(int(index)<2013):
+            data.drop(index, axis=1, inplace=True)
     # 去除nan值较多的行
     droped_row_ind = []
     for index, row in data.iterrows():
@@ -58,7 +62,6 @@ def getGovData(file_name="data_gov"):
     # 补全nan值
     data.interpolate(method="linear", axis=1, inplace=True)
     data.fillna(method="backfill", axis=1, inplace=True)
-
     # 计算协方差矩阵与标准差
     data_cov = data.T.cov()
     data_std = data.std(axis=1)
@@ -69,7 +72,6 @@ def getGovData(file_name="data_gov"):
     # 计算R
     r_pre = np.dot(np.transpose(std_inv), cov_mat)
     r = np.dot(r_pre, std_inv)
-
     # 标准化矩阵
     # 计算数据
     mean_list = data.mean(axis=1)
@@ -80,9 +82,44 @@ def getGovData(file_name="data_gov"):
     data_std_mat = (data_mat - mean_table) / std_table
     print("\n---政府数据读取与标准化完成")
     # 返回值：原始数据array,标准化数据array,r
-    return data_mat, data_std_mat, r
+    return data_mat, data_std_mat
 
-def getSelected(data,ser_name_list):
+def getBussAve(ser_name = ["Chongqing_USD"]):
+    data = getBussinessData()
+    ser_name_list = ["Date", "Date as Text", "Domestic Currency (CNY).6", "Chongqing_USD", "Chongqing_EUR"]
+
+    # 读取ser_name_list中包括的列
+
+    data = getSelected(data, ser_name_list)
+    # 读取特定年份的数据
+    data["Date"] = pd.to_datetime(data["Date"])
+    data.set_index("Date", inplace=True)
+    # 处理特定年份的数据
+    data_list = {}
+    ave_list = []
+    start_year = data.index.min().year
+    end_year = 2019
+    for ind in range(start_year, end_year + 1):
+        temp_df = data.loc[str(ind)]
+        # 存入字典
+        temp_dic = {ind: temp_df}
+        data_list.update(temp_dic)
+        # 计算平均值
+        buss_now_df = getSelected(temp_df, ser_name)
+        buss_now_df.replace("#VALUE!", None, inplace=True)
+        buss_now_arr = buss_now_df.dropna(how="any").values.astype("float")
+        if (buss_now_arr.size == 0):
+            ave_now = 0
+        else:
+            ave_now = np.mean(buss_now_arr)
+        ave_list.append(ave_now)
+    ave_list = np.array(ave_list)
+    ave_std = (ave_list-ave_list.mean())/np.std(ave_list)
+    # 返回平均值
+    return ave_list,ave_std
+
+def getSelected(data_ori,ser_name_list):
+    data = data_ori.copy();
     # 读取ser_name_list中包括的列
     for index, item in data.iteritems():
         if (index not in ser_name_list):
