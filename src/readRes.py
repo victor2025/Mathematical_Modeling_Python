@@ -12,7 +12,7 @@ def dataInitBuss(base_dir, file_name):
     return file_path, ser_name_list
 
 
-# 预处理函数
+# 读取
 def preProcessBuss(file_path, name_list):
     # 读取csv数据,去除最小有用数据
     data = pd.read_csv(file_path, sep=";")
@@ -47,8 +47,8 @@ def getGovData(file_name="data_gov"):
     data.drop(data.columns[0], axis=1, inplace=True)
     data.dropna(axis=0, how="all", inplace=True)
     # 截取2013年之后的数据
-    for index,item in data.iteritems():
-        if(int(index)<2013):
+    for index, item in data.iteritems():
+        if (int(index) < 2013):
             data.drop(index, axis=1, inplace=True)
     # 去除nan值较多的行
     droped_row_ind = []
@@ -84,13 +84,13 @@ def getGovData(file_name="data_gov"):
     # 返回值：原始数据array,标准化数据array,r
     return data_mat, data_std_mat
 
-def getBussAve(ser_name = ["Chongqing_USD"]):
+
+def getBussAve(ser_name=["Chongqing_USD"]):
     data = getBussinessData()
     ser_name_list = ["Date", "Date as Text", "Domestic Currency (CNY).6", "Chongqing_USD", "Chongqing_EUR"]
-
     # 读取ser_name_list中包括的列
-
     data = getSelected(data, ser_name_list)
+    buss_data = data
     # 读取特定年份的数据
     data["Date"] = pd.to_datetime(data["Date"])
     data.set_index("Date", inplace=True)
@@ -114,11 +114,27 @@ def getBussAve(ser_name = ["Chongqing_USD"]):
             ave_now = np.mean(buss_now_arr)
         ave_list.append(ave_now)
     ave_list = np.array(ave_list)
-    ave_std = (ave_list-ave_list.mean())/np.std(ave_list)
+    ave_std = (ave_list - ave_list.mean()) / np.std(ave_list)
     # 返回平均值
-    return ave_list,ave_std
+    return ave_list, ave_std
 
-def getSelected(data_ori,ser_name_list):
+
+def getClearBuss(ser_name=["Chongqing_USD"]):
+    data = getBussinessData()
+    data = getSelected(data, ser_name)
+    data.reset_index(drop=True, inplace=True)
+    # 截取最后1000个点
+    data_cut = data.loc[len(data) - 1000:len(data)]
+    data_cut.reset_index(drop=True, inplace=True)
+    #
+    data_cut = pd.to_numeric(data_cut["Chongqing_USD"], errors='coerce')
+    data_cut.interpolate(method="linear", inplace=True)
+    data_cut.dropna(how="any",inplace=True)
+    data_cut_mat = np.array(pd.DataFrame(data_cut))
+    return data_cut_mat
+
+
+def getSelected(data_ori, ser_name_list):
     data = data_ori.copy();
     # 读取ser_name_list中包括的列
     for index, item in data.iteritems():

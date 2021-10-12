@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
-import statsmodels.api as sm
+# import statsmodels.api as sm
 
 
 def plotData(data1, data2):

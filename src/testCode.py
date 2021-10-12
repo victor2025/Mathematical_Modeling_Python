@@ -30,5 +30,4 @@ for ind in range(start_year,end_year+1):
     else:
         ave_now = np.mean(buss_now_arr)
     ave_list.append(ave_now)
-
 print("done")
